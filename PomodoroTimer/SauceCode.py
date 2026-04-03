@@ -140,9 +140,9 @@ while True:
         end_time = time.time()
 
     if state["running"] and not state["paused"]:
-        state["time_left"] = int(end_time - time.time())
+        state["time_left"] = end_time - time.time()
         ratio = max(0, state["time_left"] / state["total_sec"])
-        m, s = divmod(max(0, state["time_left"]), 60)
+        m, s = divmod(max(0, int(state["time_left"])), 60)
         draw_timer_circle(window["-GRAPH-"], ratio, f"{m:02d}:{s:02d}",
                           "WORK" if state["is_work"] else "REST",
                           f"{state['current_loop']} / {state['LOOP']}")
