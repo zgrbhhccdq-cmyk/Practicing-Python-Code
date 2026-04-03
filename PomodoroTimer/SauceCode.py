@@ -7,7 +7,7 @@ sg.theme('DarkGrey9')
 COLOR_WORK = '#4A90E2'
 COLOR_REST = '#A066CB'
 COLOR_BG = sg.theme_background_color()
-COLOR_TXT = '#FFFFFF'
+COLOR_TXT = "#B5FFB5"
 
 alarm_names = [f"Alarm{i:02d}" for i in range(1, 11)]
 
@@ -69,7 +69,7 @@ col_rest = sg.Column([
 
 layout_settings = [
     [sg.VPush()],
-    [col_loop, sg.VerticalSeparator(), col_work, col_rest],
+    [col_loop, col_work, col_rest],
     [sg.VPush()],
 ]
 
@@ -83,8 +83,8 @@ layout_timer = [
 ]
 
 layout = [[
-    sg.Column(layout_settings, key="-COL_SET-",   element_justification='c', size=(280, 430), pad=(0, 0)),
-    sg.Column(layout_timer,    key="-COL_TIMER-", visible=False, element_justification='c', size=(280, 430), pad=(0, 0)),
+    sg.Column(layout_settings, key="-COL_SET-",   element_justification='c', size=(380, 280), pad=(0, 0)),
+    sg.Column(layout_timer,    key="-COL_TIMER-", visible=False, element_justification='c', size=(380, 280), pad=(0, 0)),
 ]]
 
 window = sg.Window("Pomodoro", layout, finalize=True, keep_on_top=True, element_padding=(0, 0), margins=(0, 0))
