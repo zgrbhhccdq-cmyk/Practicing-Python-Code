@@ -29,14 +29,23 @@ def draw_timer_circle(graph, ratio, time_str, status, loop_info):
         graph.draw_arc((25, 25), (225, 225), extent, 90, style='arc', arc_color=color, line_width=10)
 
     graph.draw_text(loop_info, (125, 180), color='#AAAAAA', font=("Arial", 10))
-    graph.draw_text(status, (125, 155), color=color, font=("Arial", 12, "bold"))
-    graph.draw_text(time_str, (125, 110), color='white', font=("Consolas", 36, "bold"))
+    graph.draw_text(status,    (125, 155), color=color,     font=("Arial", 12, "bold"))
+    graph.draw_text(time_str,  (125, 110), color='white',   font=("Consolas", 36, "bold"))
 
 def btn_clean(text, key, font_size=12, pad=(0,0)):
-    """枠線やホバー背景が出ないシンプルボタン"""
     return sg.Button(text, key=key, border_width=0, font=("Arial", font_size),
                      button_color=(COLOR_TXT, COLOR_BG),
                      mouseover_colors=(COLOR_BG, COLOR_BG), pad=pad)
+
+def stop_timer(window):
+    """STOPの共通処理（直接呼び出し用）"""
+    state["running"] = False
+    state["previewing"] = False
+    window["-PAUSE-"].update("⏸")
+    window["-COL_TIMER-"].update(visible=False)
+    window["-COL_SET-"].update(visible=True)
+    winsound.PlaySound(None, winsound.SND_PURGE)
+
 
 layout_settings = [
     [sg.VPush()],
@@ -72,15 +81,15 @@ layout_settings = [
 layout_timer = [
     [sg.VPush()],
     [sg.Graph((250, 250), (0, 0), (250, 250), key="-GRAPH-", background_color=COLOR_BG)],
-    [btn_clean("■", "-STOP-", 18, pad=(10,0)),
+    [btn_clean("■", "-STOP-",  18, pad=(10,0)),
      btn_clean("⏸", "-PAUSE-", 18, pad=(10,0)),
-     btn_clean("⏭", "-SKIP-", 18, pad=(10,0))],
+     btn_clean("⏭", "-SKIP-",  18, pad=(10,0))],
     [sg.VPush()]
 ]
 
 layout = [[
-    sg.Column(layout_settings, key="-COL_SET-", element_justification='c', size=(280, 430), pad=(0,0)),
-    sg.Column(layout_timer, key="-COL_TIMER-", visible=False, element_justification='c', size=(280, 430), pad=(0,0))
+    sg.Column(layout_settings, key="-COL_SET-",   element_justification='c', size=(280, 430), pad=(0,0)),
+    sg.Column(layout_timer,    key="-COL_TIMER-", visible=False, element_justification='c', size=(280, 430), pad=(0,0))
 ]]
 
 window = sg.Window("Pomodoro", layout, finalize=True, keep_on_top=True, element_padding=(0,0), margins=(0, 0))
@@ -89,7 +98,8 @@ end_time = 0
 
 while True:
     event, values = window.read(timeout=100)
-    if event == sg.WIN_CLOSED: break
+    if event == sg.WIN_CLOSED:
+        break
 
     updates = {
         "-LOOP_UP-": ("LOOP", 1), "-LOOP_DN-": ("LOOP", -1),
@@ -117,22 +127,22 @@ while True:
         state.update({"running": True, "paused": False, "is_work": True, "current_loop": 1})
         state["time_left"] = state["total_sec"] = state["WORK"] * 60
         end_time = time.time() + state["time_left"]
+        window["-PAUSE-"].update("⏸")
         window["-COL_SET-"].update(visible=False)
         window["-COL_TIMER-"].update(visible=True)
 
     if event == "-STOP-":
-        state["running"] = False
-        window["-COL_TIMER-"].update(visible=False)
-        window["-COL_SET-"].update(visible=True)
-        winsound.PlaySound(None, winsound.SND_PURGE)
+        stop_timer(window)
 
     if event == "-PAUSE-":
         state["paused"] = not state["paused"]
         window["-PAUSE-"].update("▶" if state["paused"] else "⏸")
-        if not state["paused"]: end_time = time.time() + state["time_left"]
+        if not state["paused"]:
+            end_time = time.time() + state["time_left"]
 
     if event == "-SKIP-":
         state["time_left"] = 0
+        end_time = time.time()
 
     if state["running"] and not state["paused"]:
         state["time_left"] = int(end_time - time.time())
@@ -145,7 +155,8 @@ while True:
 
         if state["time_left"] <= 0:
             path = os.path.join(r"C:\Windows\Media", values["-ALARM-"] + ".wav")
-            winsound.PlaySound(path, winsound.SND_FILENAME | winsound.SND_ASYNC)
+            if os.path.exists(path):
+                winsound.PlaySound(path, winsound.SND_FILENAME | winsound.SND_ASYNC)
 
             if state["is_work"]:
                 state["is_work"] = False
@@ -153,9 +164,8 @@ while True:
             else:
                 state["current_loop"] += 1
                 if state["current_loop"] > state["LOOP"]:
-                    state["running"] = False
                     sg.popup_no_buttons("Complete!", auto_close=True, auto_close_duration=2)
-                    window["-STOP-"].click()
+                    stop_timer(window)
                     continue
                 state["is_work"] = True
                 state["time_left"] = state["total_sec"] = state["WORK"] * 60
