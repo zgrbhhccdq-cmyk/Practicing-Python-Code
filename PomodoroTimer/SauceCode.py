@@ -18,15 +18,37 @@ state = {
     "previewing": False
 }
 
+CX, CY, R = 135, 135, 118
+GW, GH    = 270, 270
+
+BTN_STOP  = (75,  68)
+BTN_PAUSE = (135, 68)
+BTN_SKIP  = (195, 68)
+BTN_HIT_R = 22
+
+def in_btn(x, y, bx, by):
+    return (x - bx) ** 2 + (y - by) ** 2 <= BTN_HIT_R ** 2
+
 def draw_timer_circle(graph, ratio, time_str, status, loop_info):
     graph.erase()
     color = COLOR_WORK if state["is_work"] else COLOR_REST
-    graph.draw_circle((125, 125), 100, line_color='#000000', line_width=10)
+
+    graph.draw_circle((CX, CY), R, line_color='#1c1c1c', line_width=14)
+
     if ratio > 0:
-        graph.draw_arc((25, 25), (225, 225), -360 * ratio, 90, style='arc', arc_color=color, line_width=10)
-    graph.draw_text(loop_info, (125, 180), color='#AAAAAA', font=("Arial", 10))
-    graph.draw_text(status,    (125, 155), color=color,     font=("Arial", 12, "bold"))
-    graph.draw_text(time_str,  (125, 110), color='white',   font=("Consolas", 36, "bold"))
+        graph.draw_arc((CX - R, CY - R), (CX + R, CY + R),
+                       -360 * ratio, 90,
+                       style='arc', arc_color=color, line_width=14)
+
+    graph.draw_text(loop_info, (CX, CY + 55), color='#888888', font=("Arial", 9))
+    graph.draw_text(status,    (CX, CY + 33), color=color,     font=("Arial", 11, "bold"))
+    graph.draw_text(time_str,  (CX, CY - 5),  color='white',   font=("Consolas", 34, "bold"))
+
+    pause_icon = "▶" if state["paused"] else "⏸"
+    icon_color = '#B5FFB5'
+    graph.draw_text("■",        BTN_STOP,  color=icon_color, font=("Arial", 16))
+    graph.draw_text(pause_icon, BTN_PAUSE, color=icon_color, font=("Arial", 16))
+    graph.draw_text("⏭",        BTN_SKIP,  color=icon_color, font=("Arial", 16))
 
 def btn_clean(text, key, font_size=12, pad=(0, 0)):
     return sg.Button(text, key=key, border_width=0, font=("Arial", font_size),
@@ -35,8 +57,8 @@ def btn_clean(text, key, font_size=12, pad=(0, 0)):
 
 def stop_timer(window):
     state["running"] = False
+    state["paused"]  = False
     state["previewing"] = False
-    window["-PAUSE-"].update("⏸")
     window["-COL_TIMER-"].update(visible=False)
     window["-COL_SET-"].update(visible=True)
     winsound.PlaySound(None, winsound.SND_PURGE)
@@ -75,19 +97,19 @@ layout_settings = [
 
 layout_timer = [
     [sg.VPush()],
-    [sg.Graph((250, 250), (0, 0), (250, 250), key="-GRAPH-", background_color=COLOR_BG)],
-    [btn_clean("■", "-STOP-",  18, pad=(10, 0)),
-     btn_clean("⏸", "-PAUSE-", 18, pad=(10, 0)),
-     btn_clean("⏭", "-SKIP-",  18, pad=(10, 0))],
+    [sg.Graph((GW, GH), (0, 0), (GW, GH),
+              key="-GRAPH-", background_color=COLOR_BG,
+              enable_events=True)],
     [sg.VPush()],
 ]
 
 layout = [[
-    sg.Column(layout_settings, key="-COL_SET-",   element_justification='c', size=(380, 280), pad=(0, 0)),
-    sg.Column(layout_timer,    key="-COL_TIMER-", visible=False, element_justification='c', size=(380, 280), pad=(0, 0)),
+    sg.Column(layout_settings, key="-COL_SET-",   element_justification='c', size=(380, 290), pad=(0, 0)),
+    sg.Column(layout_timer,    key="-COL_TIMER-", visible=False, element_justification='c', size=(380, 290), pad=(0, 0)),
 ]]
 
-window = sg.Window("Pomodoro", layout, finalize=True, keep_on_top=True, element_padding=(0, 0), margins=(0, 0))
+window = sg.Window("Pomodoro", layout, finalize=True, keep_on_top=True,
+                   element_padding=(0, 0), margins=(0, 0))
 
 end_time = 0
 
@@ -122,22 +144,21 @@ while True:
         state.update({"running": True, "paused": False, "is_work": True, "current_loop": 1})
         state["time_left"] = state["total_sec"] = state["WORK"] * 60
         end_time = time.time() + state["time_left"]
-        window["-PAUSE-"].update("⏸")
         window["-COL_SET-"].update(visible=False)
         window["-COL_TIMER-"].update(visible=True)
 
-    if event == "-STOP-":
-        stop_timer(window)
-
-    if event == "-PAUSE-":
-        state["paused"] = not state["paused"]
-        window["-PAUSE-"].update("▶" if state["paused"] else "⏸")
-        if not state["paused"]:
-            end_time = time.time() + state["time_left"]
-
-    if event == "-SKIP-":
-        state["time_left"] = 0
-        end_time = time.time()
+    if event == "-GRAPH-" and values["-GRAPH-"] != (None, None):
+        gx, gy = values["-GRAPH-"]
+        if gx is not None:
+            if in_btn(gx, gy, *BTN_STOP):
+                stop_timer(window)
+            elif in_btn(gx, gy, *BTN_PAUSE):
+                state["paused"] = not state["paused"]
+                if not state["paused"]:
+                    end_time = time.time() + state["time_left"]
+            elif in_btn(gx, gy, *BTN_SKIP):
+                state["time_left"] = 0
+                end_time = time.time()
 
     if state["running"] and not state["paused"]:
         state["time_left"] = end_time - time.time()
@@ -165,5 +186,12 @@ while True:
                 state["time_left"] = state["total_sec"] = state["WORK"] * 60
 
             end_time = time.time() + state["time_left"]
+
+    elif state["running"] and state["paused"]:
+        ratio = max(0, state["time_left"] / state["total_sec"])
+        m, s = divmod(max(0, int(state["time_left"])), 60)
+        draw_timer_circle(window["-GRAPH-"], ratio, f"{m:02d}:{s:02d}",
+                          "WORK" if state["is_work"] else "REST",
+                          f"{state['current_loop']} / {state['LOOP']}")
 
 window.close()
