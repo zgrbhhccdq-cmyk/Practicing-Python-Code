@@ -21,64 +21,69 @@ state = {
 def draw_timer_circle(graph, ratio, time_str, status, loop_info):
     graph.erase()
     color = COLOR_WORK if state["is_work"] else COLOR_REST
-    graph.draw_circle((125, 125), 100, line_color='#333333', line_width=2)
+
+    graph.draw_circle((125, 125), 100, line_color='#000000', line_width=10)
+
     if ratio > 0:
-        graph.draw_arc((25, 25), (225, 225), 360 * ratio, 90, style='arc', arc_color=color, line_width=8)
+        extent = 360 * ratio
+        graph.draw_arc((25, 25), (225, 225), extent, 90, style='arc', arc_color=color, line_width=10)
+
     graph.draw_text(loop_info, (125, 180), color='#AAAAAA', font=("Arial", 10))
     graph.draw_text(status, (125, 155), color=color, font=("Arial", 12, "bold"))
     graph.draw_text(time_str, (125, 110), color='white', font=("Consolas", 36, "bold"))
 
-def btn_mini(text, key, font_size=12):
+def btn_clean(text, key, font_size=12, pad=(0,0)):
+    """枠線やホバー背景が出ないシンプルボタン"""
     return sg.Button(text, key=key, border_width=0, font=("Arial", font_size),
-                     button_color=(COLOR_TXT, COLOR_BG), mouseover_colors=(COLOR_BG, COLOR_BG), pad=(0, 0))
+                     button_color=(COLOR_TXT, COLOR_BG),
+                     mouseover_colors=(COLOR_BG, COLOR_BG), pad=pad)
 
 layout_settings = [
     [sg.VPush()],
-    [sg.Text("Loop", font=("Arial", 10), pad=(0, 5))],
-    [btn_mini("◀", "-LOOP_DN-"),
-     sg.Text(str(state["LOOP"]), key="-LOOP_VAL-", font=("Arial", 20, "bold"), size=(3, 1), justification='c'),
-     btn_mini("▶", "-LOOP_UP-")],
+    [sg.Text("Loop", font=("Arial", 10))],
+    [btn_clean("◀", "-LOOP_DN-", pad=(10,0)),
+     sg.Text(str(state["LOOP"]), key="-LOOP_VAL-", font=("Arial", 22, "bold"), size=(3, 1), justification='c'),
+     btn_clean("▶", "-LOOP_UP-", pad=(10,0))],
 
     [sg.Text("", size=(1, 1))],
 
     [sg.Column([
         [sg.Text("Work", font=("Arial", 9))],
-        [btn_mini("▲", "-WORK_UP-")],
-        [sg.Text(str(state["WORK"]), key="-WORK_VAL-", font=("Arial", 18, "bold"), size=(2, 1), justification='c')],
-        [btn_mini("▼", "-WORK_DN-")]
+        [btn_clean("▲", "-WORK_UP-")],
+        [sg.Text(str(state["WORK"]), key="-WORK_VAL-", font=("Arial", 20, "bold"), size=(2, 1), justification='c')],
+        [btn_clean("▼", "-WORK_DN-")]
     ], element_justification='c', pad=(15, 0)),
      sg.Column([
         [sg.Text("Rest", font=("Arial", 9))],
-        [btn_mini("▲", "-REST_UP-")],
-        [sg.Text(str(state["REST"]), key="-REST_VAL-", font=("Arial", 18, "bold"), size=(2, 1), justification='c')],
-        [btn_mini("▼", "-REST_DN-")]
+        [btn_clean("▲", "-REST_UP-")],
+        [sg.Text(str(state["REST"]), key="-REST_VAL-", font=("Arial", 20, "bold"), size=(2, 1), justification='c')],
+        [btn_clean("▼", "-REST_DN-")]
     ], element_justification='c', pad=(15, 0))],
 
     [sg.Text("", size=(1, 1))],
 
-    [sg.Button("♫", key="-PREVIEW-", border_width=0, button_color=("white", COLOR_BG),
-               mouseover_colors=(COLOR_BG, COLOR_BG), font=("Arial", 14), pad=((0, 10), (0, 0))),
+    [btn_clean("♫", "-PREVIEW-", 16, pad=((0, 10), (0, 0))),
      sg.Combo(alarm_names, default_value="Alarm01", key="-ALARM-", readonly=True, size=(10, 1), font=("Arial", 10))],
 
-    [btn_mini("▶", "-START-", 40)],
+    [btn_clean("▶", "-START-", 45, pad=(0, 15))],
     [sg.VPush()]
 ]
 
 layout_timer = [
     [sg.VPush()],
     [sg.Graph((250, 250), (0, 0), (250, 250), key="-GRAPH-", background_color=COLOR_BG)],
-    [sg.Button("■", key="-STOP-", border_width=0, size=(2, 1), button_color=(COLOR_TXT, "#333333")),
-     sg.Button("⏸", key="-PAUSE-", border_width=0, size=(2, 1), button_color=(COLOR_TXT, "#333333")),
-     sg.Button("⏭", key="-SKIP-", border_width=0, size=(2, 1), button_color=(COLOR_TXT, "#333333"))],
+    [btn_clean("■", "-STOP-", 18, pad=(10,0)),
+     btn_clean("⏸", "-PAUSE-", 18, pad=(10,0)),
+     btn_clean("⏭", "-SKIP-", 18, pad=(10,0))],
     [sg.VPush()]
 ]
 
 layout = [[
-    sg.Column(layout_settings, key="-COL_SET-", element_justification='c', size=(280, 420)),
-    sg.Column(layout_timer, key="-COL_TIMER-", visible=False, element_justification='c', size=(280, 420))
+    sg.Column(layout_settings, key="-COL_SET-", element_justification='c', size=(280, 430), pad=(0,0)),
+    sg.Column(layout_timer, key="-COL_TIMER-", visible=False, element_justification='c', size=(280, 430), pad=(0,0))
 ]]
 
-window = sg.Window("Pomodoro", layout, finalize=True, keep_on_top=True, element_padding=(0,0), margins=(5, 5))
+window = sg.Window("Pomodoro", layout, finalize=True, keep_on_top=True, element_padding=(0,0), margins=(0, 0))
 
 end_time = 0
 
@@ -131,6 +136,7 @@ while True:
 
     if state["running"] and not state["paused"]:
         state["time_left"] = int(end_time - time.time())
+
         ratio = max(0, state["time_left"] / state["total_sec"])
         m, s = divmod(max(0, state["time_left"]), 60)
         draw_timer_circle(window["-GRAPH-"], ratio, f"{m:02d}:{s:02d}",
@@ -140,6 +146,7 @@ while True:
         if state["time_left"] <= 0:
             path = os.path.join(r"C:\Windows\Media", values["-ALARM-"] + ".wav")
             winsound.PlaySound(path, winsound.SND_FILENAME | winsound.SND_ASYNC)
+
             if state["is_work"]:
                 state["is_work"] = False
                 state["time_left"] = state["total_sec"] = state["REST"] * 60
@@ -152,6 +159,7 @@ while True:
                     continue
                 state["is_work"] = True
                 state["time_left"] = state["total_sec"] = state["WORK"] * 60
+
             end_time = time.time() + state["time_left"]
 
 window.close()
