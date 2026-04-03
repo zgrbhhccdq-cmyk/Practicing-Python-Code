@@ -32,7 +32,6 @@ def in_btn(x, y, bx, by):
 def draw_timer_circle(graph, ratio, time_str, status, loop_info):
     graph.erase()
     color = COLOR_WORK if state["is_work"] else COLOR_REST
-
     graph.draw_circle((CX, CY), R, line_color='#1c1c1c', line_width=14)
 
     if ratio > 0:
@@ -45,7 +44,7 @@ def draw_timer_circle(graph, ratio, time_str, status, loop_info):
     graph.draw_text(time_str,  (CX, CY - 5),  color='white',   font=("Consolas", 34, "bold"))
 
     pause_icon = "▶" if state["paused"] else "⏸"
-    icon_color = '#B5FFB5'
+    icon_color = '#FFFFFF'
     graph.draw_text("■",        BTN_STOP,  color=icon_color, font=("Arial", 16))
     graph.draw_text(pause_icon, BTN_PAUSE, color=icon_color, font=("Arial", 16))
     graph.draw_text("⏭",        BTN_SKIP,  color=icon_color, font=("Arial", 16))
