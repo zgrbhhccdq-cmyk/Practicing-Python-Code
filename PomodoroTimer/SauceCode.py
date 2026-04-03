@@ -68,7 +68,7 @@ def draw_timer_circle(graph, ratio, time_str, status, loop_info):
     graph.draw_text(time_str,  (CX, CY - 5),  color='white',   font=("Consolas", 34, "bold"))
 
     pause_icon = "▶" if state["paused"] else "⏸"
-    icon_color = '#FFFFFF'
+    icon_color = '#B5FFB5'
     graph.draw_text("■",        BTN_STOP,  color=icon_color, font=("Arial", 16))
     graph.draw_text(pause_icon, BTN_PAUSE, color=icon_color, font=("Arial", 16))
     graph.draw_text("⏭",        BTN_SKIP,  color=icon_color, font=("Arial", 16))
