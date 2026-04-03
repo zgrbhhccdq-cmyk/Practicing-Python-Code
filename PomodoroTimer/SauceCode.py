@@ -7,6 +7,7 @@ sg.theme('DarkGrey9')
 COLOR_WORK = '#4A90E2'
 COLOR_REST = '#A066CB'
 COLOR_BG = sg.theme_background_color()
+COLOR_TXT = '#B5FFB5'
 
 alarm_names = [f"Alarm{i:02d}" for i in range(1, 11)]
 
