@@ -7,7 +7,6 @@ sg.theme('DarkGrey9')
 COLOR_WORK = '#4A90E2'
 COLOR_REST = '#A066CB'
 COLOR_BG = sg.theme_background_color()
-COLOR_TXT = "#B5FFB5"
 
 alarm_names = [f"Alarm{i:02d}" for i in range(1, 11)]
 
@@ -23,7 +22,7 @@ def draw_timer_circle(graph, ratio, time_str, status, loop_info):
     color = COLOR_WORK if state["is_work"] else COLOR_REST
     graph.draw_circle((125, 125), 100, line_color='#000000', line_width=10)
     if ratio > 0:
-        graph.draw_arc((25, 25), (225, 225), 360 * ratio, 90, style='arc', arc_color=color, line_width=10)
+        graph.draw_arc((25, 25), (225, 225), -360 * ratio, 90, style='arc', arc_color=color, line_width=10)
     graph.draw_text(loop_info, (125, 180), color='#AAAAAA', font=("Arial", 10))
     graph.draw_text(status,    (125, 155), color=color,     font=("Arial", 12, "bold"))
     graph.draw_text(time_str,  (125, 110), color='white',   font=("Consolas", 36, "bold"))
