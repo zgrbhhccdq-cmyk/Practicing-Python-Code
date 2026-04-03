@@ -29,49 +29,26 @@ BTN_HIT_R = 22
 def in_btn(x, y, bx, by):
     return (x - bx) ** 2 + (y - by) ** 2 <= BTN_HIT_R ** 2
 
-def draw_arc_aa(graph, cx, cy, r, extent, start, color, width):
-    """アンチエイリアス風に複数の弧を重ねて描画"""
-    layers = [
-        (r + 3, width - 6, _dim(color, 0.25)),
-        (r + 1, width - 2, _dim(color, 0.60)),
-        (r,     width,     color),
-        (r - 1, width - 2, _dim(color, 0.60)),
-        (r - 3, width - 6, _dim(color, 0.25)),
-    ]
-    for lr, lw, lc in layers:
-        if lw > 0:
-            graph.draw_arc((cx - lr, cy - lr), (cx + lr, cy + lr),
-                           extent, start, style='arc', arc_color=lc, line_width=lw)
-
-def _dim(hex_color, alpha):
-    """hex カラーを背景色(#1c1c1c)とアルファブレンド"""
-    bg = (0x1c, 0x1c, 0x1c)
-    r = int(hex_color[1:3], 16)
-    g = int(hex_color[3:5], 16)
-    b = int(hex_color[5:7], 16)
-    r2 = int(r * alpha + bg[0] * (1 - alpha))
-    g2 = int(g * alpha + bg[1] * (1 - alpha))
-    b2 = int(b * alpha + bg[2] * (1 - alpha))
-    return f"#{r2:02x}{g2:02x}{b2:02x}"
-
 def draw_timer_circle(graph, ratio, time_str, status, loop_info):
     graph.erase()
     color = COLOR_WORK if state["is_work"] else COLOR_REST
 
-    draw_arc_aa(graph, CX, CY, R, 360, 90, '#3a3a3a', 14)
+    graph.draw_arc((CX - R, CY - R), (CX + R, CY + R),
+                   360, 90, style='arc', arc_color="#000000", line_width=14)
 
     if ratio > 0:
-        draw_arc_aa(graph, CX, CY, R, -360 * ratio, 90, color, 14)
+        graph.draw_arc((CX - R, CY - R), (CX + R, CY + R),
+                       -360 * ratio, 90,
+                       style='arc', arc_color=color, line_width=14)
 
-    graph.draw_text(loop_info, (CX, CY + 55), color='#888888', font=("Arial", 9))
+    graph.draw_text(loop_info, (CX, CY + 55), color='#B5FFB5', font=("Arial", 9))
     graph.draw_text(status,    (CX, CY + 33), color=color,     font=("Arial", 11, "bold"))
     graph.draw_text(time_str,  (CX, CY - 5),  color='white',   font=("Consolas", 34, "bold"))
 
     pause_icon = "▶" if state["paused"] else "⏸"
-    icon_color = '#B5FFB5'
-    graph.draw_text("■",        BTN_STOP,  color=icon_color, font=("Arial", 16))
-    graph.draw_text(pause_icon, BTN_PAUSE, color=icon_color, font=("Arial", 16))
-    graph.draw_text("⏭",        BTN_SKIP,  color=icon_color, font=("Arial", 16))
+    graph.draw_text("■",        BTN_STOP,  color='#B5FFB5', font=("Arial", 16))
+    graph.draw_text(pause_icon, BTN_PAUSE, color='#B5FFB5', font=("Arial", 16))
+    graph.draw_text("⏭",        BTN_SKIP,  color='#B5FFB5', font=("Arial", 16))
 
 def btn_clean(text, key, font_size=12, pad=(0, 0)):
     return sg.Button(text, key=key, border_width=0, font=("Arial", font_size),
@@ -182,6 +159,7 @@ while True:
             elif in_btn(gx, gy, *BTN_SKIP):
                 state["time_left"] = 0
                 end_time = time.time()
+
             if state["running"]:
                 ratio = max(0, state["time_left"] / state["total_sec"])
                 m, s = divmod(max(0, int(state["time_left"])), 60)
